@@ -65,7 +65,7 @@ var num = 0;
 // 连接网络
 connect();
 // 每分钟进行网络测试
-setTimeout(function () {
+setInterval(function () {
     test();
     num++;
     // 每20分钟重连网络
