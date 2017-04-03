@@ -1,0 +1,76 @@
+/**
+ * Created by Paul on 2017/4/2.
+ */
+const fs = require('fs');
+
+const TYPE = {
+    error: 'ERROR',
+    info: 'INFO',
+    success: 'SUCCESS'
+};
+const request = require('request').defaults({jar: true});
+const COMMON = require('./common');
+const LOGIN = require('./login');
+const URL = 'http://219.229.251.2:804/srun_portal_pc_xs.php?ac_id=1&ip=10.128.18.44';
+const COOKIE = "login=bQ0pOyR6IXU7PJaQQqRAcBPxGAvxAcroYf0isl5Gb%252BoAxe1FIUr8MGp0k9rDDzLBxX2ySdCba%252BlQ8WvXo8Cz9QyxF5%252F00mBBdRV9mWXml95YCM%252BJBmWTAeFf2wIJi3Vgfcz%252BS5RRA3gGpjdzbzTC45PuZzpPg5DdnD8GaEwHa%252FJPtfxlKpOVboNEYYOFo5XT2wyriv7bCJc%253D; double_stack_login=bQ0pOyR6IX%252Fu0akbf5QES0glrbCtHF7Gw%252BmRnW8jBgQwtuTCVZUV7eoo5Kcrut16FJPC%252FD2C69ka7gE8ndWK5C%252BzV%252BsBPSeWYrunnzJZSf6pOWQ%252BKNLqyWLzbWGTljMQgKLCLEzd9CPzqhtYBWqPP8XOgjQcMgsMzNY9gdCUtD6EzKT1gNvVgQHsPnYNRnJ%252B; login=bQ0pOyR6IXU7PJaQQqRAcBPxGAvxAcroYf0isl5Gb%252BoAxe1FIUr8MGp0k9rDDzLBxX2ySdCba%252BlQ8WvXo8Cz9QyxF5%252F00mBBdRV9mWXml95YCM%252BJBmWTAeFf2wIJi3Vgfcz%252BS5RRA3gGpjdzbzTC45PuZzpPg5DdnD8GaEwHa%252FJPtfxlKpOVboNEYYOFo5XT2wyriv7bCJc%253D";
+const BROWSER = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36';
+let FORMDATA = {
+    action: 'login',
+    username:  LOGIN.USER,
+    password: LOGIN.PASSWORD,
+    'ac_id': 1,
+    'user_ip': '10.128.18.44',
+    nas_ip: '',
+    user_mac: '',
+    save_me: 1,
+    ajax: 1
+};
+let j = request.jar();
+j.setCookie(request.cookie(COOKIE), URL, function (err, cookie) {
+    console.log('set cookie success!');
+});
+
+const getTxt = (date)=>`${COMMON.DIST_PATH}\\log_${date}.txt`;
+const writeLog = (type, msg)=> {
+    let date = COMMON.getDate();
+    let filePath = getTxt(date.date);
+    // window，mac，Linux换行表现不同但是不影响，就没有引入os模块判断
+    fs.appendFileSync(filePath, `${type}    ${date.time}    ${msg}\r\n`);
+};
+const connect = ()=> {
+    request.post({
+        url: URL,
+        form: FORMDATA,
+        headers: {
+            'User-Agent': BROWSER
+        },
+        jar: j
+    }, function (err, res) {
+        if (!err && res.statusCode == 200) {
+            writeLog(TYPE.success, '重连成功');
+        }
+    });
+};
+const test = ()=> {
+    request.get({url: 'https://www.baidu.com/'}, function (err) {
+        if (err) {
+            writeLog(TYPE.error, '网络已断开连接');
+            connect();
+        }
+    })
+};
+
+// 分钟计时
+var num = 0;
+// 连接网络
+connect();
+// 每分钟进行网络测试
+setTimeout(function () {
+    test();
+    num++;
+    // 每20分钟重连网络
+    if (num == 20) {
+        num = 0;
+        connect();
+    }
+}, 60000);

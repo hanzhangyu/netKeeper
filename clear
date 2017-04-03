@@ -1,0 +1,23 @@
+/**
+ * Created by Paul on 2017/4/3.
+ *
+ * 主进程会经常掉线，而clear这个初始化的脚本可以不用再次执行
+ */
+const fs = require('fs');
+const COMMON = require('./common');
+// 检查日志目录，删除过期日志
+const getTxtName = (date)=>`log_${date}.txt`;
+if (fs.existsSync(COMMON.DIST_PATH)) {
+    var dirList = fs.readdirSync(COMMON.DIST_PATH);
+    dirList.forEach(function (fileName) {
+        // 保留今天和昨天的日志文件
+        if (fileName != getTxtName(COMMON.getDate().date) && fileName != getTxtName(COMMON.getDate(-1).date)) {
+            fs.unlinkSync(COMMON.DIST_PATH + '\\' + fileName);
+            console.log('已删除：'+fileName);
+        }
+    });
+} else {
+    fs.mkdirSync(COMMON.DIST_PATH);
+    console.log('创建目录');
+}
+console.log('初始化完毕！');
