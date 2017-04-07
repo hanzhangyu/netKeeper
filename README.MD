@@ -5,3 +5,6 @@
 npm install
 npm start
 ```
+
+### Tips
+校园网分配的是动态IP
